@@ -317,7 +317,9 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
             transporter.sendMail(studentMailOptions, (mailErr, info) => {
                 if (mailErr) {
                     console.error('❌ Student Email Dispatch Failed:', mailErr);
-                    return res.status(500).json({ error: mailErr.message });
+                    return res.status(200).json({ 
+                        message: `Student ${student.full_name} approved successfully (Note: Email dispatch encountered an issue).` 
+                    });
                 }
 
                 console.log('✅ Student Approval Email Sent:', info.response);
