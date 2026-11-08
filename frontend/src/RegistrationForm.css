@@ -1,0 +1,442 @@
+/* ==========================================================================
+   AMAGix Technologies — Modern Registration Portal CSS
+   Design System: Glassmorphism, Deep Navy, Ice-Blue Accents
+   ========================================================================== */
+
+.portal-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  width: 100%;
+}
+
+/* Background Ambient Lighting Spheres */
+.portal-ambient-sphere {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+
+.portal-ambient-1 {
+  width: 500px;
+  height: 500px;
+  top: -100px;
+  right: -50px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.05) 60%, transparent 80%);
+}
+
+.portal-ambient-2 {
+  width: 600px;
+  height: 600px;
+  bottom: -150px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(30, 58, 138, 0.08) 60%, transparent 80%);
+}
+
+/* Glassmorphism Portal Card */
+.portal-card {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-color);
+  padding: 42px 40px;
+  border-radius: 20px;
+  box-shadow: 
+    0 24px 60px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(56, 189, 248, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  width: 100%;
+  max-width: 640px;
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.portal-card:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  box-shadow: 
+    0 28px 70px -10px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(56, 189, 248, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Brand Header */
+.brand-header {
+  text-align: center;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Status / Admissions Open Badge */
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: dot-pulse 2s infinite ease-in-out;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Logo Presentation */
+.logo-glow-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.logo-glow-wrapper::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+  filter: blur(12px);
+  z-index: 0;
+}
+
+.company-logo {
+  position: relative;
+  z-index: 1;
+  max-height: 54px;
+  max-width: 170px;
+  object-fit: contain;
+  background: #FFFFFF;
+  padding: 6px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(56, 189, 248, 0.25);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.company-logo:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 189, 248, 0.4);
+}
+
+/* Heading Hierarchy */
+.brand-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #FFFFFF 40%, #BAE6FD 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.25;
+}
+
+.portal-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 6px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* Alert Banners */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
+  text-align: left;
+}
+
+.alert-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.alert-message {
+  flex: 1;
+}
+
+.alert-banner.success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ADE80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.12);
+}
+
+.alert-banner.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.12);
+}
+
+/* Modern Form Elements */
+.modern-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-form .input-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modern-form label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #CBD5E1;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.modern-form label svg {
+  color: var(--accent-primary);
+  opacity: 0.85;
+}
+
+/* Inputs and Select Elements */
+.modern-form input,
+.modern-form select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.modern-form input::placeholder {
+  color: #475569;
+}
+
+/* Custom styled Select dropdown */
+.modern-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2338BDF8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.modern-form select option {
+  background-color: #111C2E;
+  color: var(--text-primary);
+  padding: 10px;
+}
+
+/* Focus and Hover states */
+.modern-form input:hover,
+.modern-form select:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+  background-color: rgba(15, 23, 42, 0.85);
+}
+
+.modern-form input:focus,
+.modern-form select:focus {
+  border-color: var(--accent-primary);
+  background-color: rgba(15, 23, 42, 0.95);
+  box-shadow: 
+    0 0 0 3px rgba(56, 189, 248, 0.2),
+    0 0 20px rgba(56, 189, 248, 0.12);
+  outline: none;
+}
+
+/* Submit Action Button */
+.submit-action-btn {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--accent-gradient);
+  color: #07101E;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  margin-top: 10px;
+  box-shadow: 
+    0 4px 18px rgba(56, 189, 248, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-action-btn .btn-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform var(--transition-fast);
+}
+
+.submit-action-btn .btn-arrow {
+  transition: transform var(--transition-fast);
+}
+
+.submit-action-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 26px rgba(56, 189, 248, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.submit-action-btn:hover:not(:disabled) .btn-arrow {
+  transform: translateX(3px);
+}
+
+.submit-action-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
+}
+
+.submit-action-btn:disabled {
+  background: #1E293B;
+  color: #64748B;
+  cursor: not-allowed;
+  box-shadow: none;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* Button Loading State */
+.btn-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(7, 16, 30, 0.25);
+  border-top-color: #07101E;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.submit-action-btn:disabled .spinner {
+  border-color: rgba(100, 116, 139, 0.3);
+  border-top-color: #94A3B8;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Form Security Footer */
+.form-security-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 18px;
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.form-security-footer svg {
+  color: var(--accent-primary);
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  .portal-wrapper {
+    padding: 24px 14px;
+    align-items: flex-start;
+  }
+
+  .portal-card {
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .brand-header h1 {
+    font-size: 22px;
+  }
+
+  .portal-subtitle {
+    font-size: 13px;
+  }
+
+  .submit-action-btn {
+    padding: 13px 18px;
+    font-size: 14.5px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .portal-card {
+    max-width: 680px;
+    padding: 48px 46px;
+  }
+}

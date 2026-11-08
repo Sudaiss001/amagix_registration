@@ -1,0 +1,1 @@
+# amagix_registration
