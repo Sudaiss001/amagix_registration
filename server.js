@@ -181,7 +181,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
 
         const student = results[0];
 
-        db.query('UPDATE students SET status = "APPROVED" WHERE id = ?', [studentId], (updateErr) => {
+        db.query("UPDATE students SET status = 'APPROVED' WHERE id = ?", [studentId], (updateErr) => {
             if (updateErr) {
                 console.error('❌ Database Update Failed:', updateErr);
                 return res.status(500).json({ error: 'Failed to update student status.' });
