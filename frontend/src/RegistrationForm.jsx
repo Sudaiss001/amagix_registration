@@ -218,7 +218,7 @@ export default function RegistrationForm({ companyName = "AMAGix Technologies", 
                 <option value="Basic Computing">Basic Computing</option>
                 <option value="Web Development">Web Development</option>
                 <option value="App Development">App Development</option>
-                <option value="Server Security & Ethical Hacking">Server Security & Ethical Hacking</option>
+                <option value="CyberSecurity & Ethical Hacking">CyberSecurity & Ethical Hacking</option>
               </select>
             </div>
 
