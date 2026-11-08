@@ -1,6 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -9,6 +9,9 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Initialize Resend with API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // 1. MySQL Database Connection Pool (Cloud Aiven Database)
 const db = mysql.createPool({
@@ -29,7 +32,6 @@ db.getConnection((err, connection) => {
     } else {
         console.log('✅ Connected to MySQL database successfully!');
         
-        // Auto-create the students table if it doesn't exist yet
         const createTableQuery = `
             CREATE TABLE IF NOT EXISTS students (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,26 +58,6 @@ db.getConnection((err, connection) => {
     }
 });
 
-// 2. Nodemailer Email Transporter Configuration
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: false, // true for 465, false for 587
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    }
-});
-
-// Verify SMTP Connection
-transporter.verify((error) => {
-    if (error) {
-        console.error('❌ SMTP Configuration Error:', error.message);
-    } else {
-        console.log('✅ Mail server is ready to send messages');
-    }
-});
-
 // -------------------------------------------------------------
 // ENDPOINT 1: Student Registration (POST /api/register)
 // -------------------------------------------------------------
@@ -88,7 +70,7 @@ app.post('/api/register', (req, res) => {
 
     const sqlInsert = `INSERT INTO students (full_name, email, phone, gender, state, track, experience_level) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-    db.query(sqlInsert, [full_name, email, phone, gender, state, track, experience_level || 'Beginner'], (err, result) => {
+    db.query(sqlInsert, [full_name, email, phone, gender, state, track, experience_level || 'Beginner'], async (err, result) => {
         if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(400).json({ error: 'This email address is already registered.' });
@@ -99,30 +81,29 @@ app.post('/api/register', (req, res) => {
 
         const studentId = result.insertId;
 
-        // Send instant notification email to Admin
-        const adminMailOptions = {
-            from: `"AMAGix Portal" <${process.env.SMTP_USER}>`,
-            to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
-            subject: `🚨 New Student Registration: ${full_name}`,
-            html: `
-                <h2>New Student Application Received</h2>
-                <p><strong>Name:</strong> ${full_name}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Phone:</strong> ${phone}</p>
-                <p><strong>Gender:</strong> ${gender}</p>
-                <p><strong>State:</strong> ${state}</p>
-                <p><strong>Selected Track:</strong> ${track}</p>
-                <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
-                <hr />
-                <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
-            `
-        };
-
-        transporter.sendMail(adminMailOptions, (mailErr) => {
-            if (mailErr) {
-                console.error('Admin Email Dispatch Error:', mailErr);
-            }
-        });
+        // Send instant notification email to Admin via Resend
+        try {
+            await resend.emails.send({
+                from: 'AMAGix Portal <onboarding@resend.dev>', // Use onboarding@resend.dev for testing without a custom domain
+                to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
+                subject: `🚨 New Student Registration: ${full_name}`,
+                html: `
+                    <h2>New Student Application Received</h2>
+                    <p><strong>Name:</strong> ${full_name}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Phone:</strong> ${phone}</p>
+                    <p><strong>Gender:</strong> ${gender}</p>
+                    <p><strong>State:</strong> ${state}</p>
+                    <p><strong>Selected Track:</strong> ${track}</p>
+                    <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
+                    <hr />
+                    <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
+                `
+            });
+            console.log('✅ Admin Registration Notification Email Sent');
+        } catch (mailErr) {
+            console.error('❌ Admin Email Dispatch Error:', mailErr);
+        }
 
         res.status(201).json({
             message: 'Registration successful! Your application has been submitted for review.',
@@ -181,18 +162,18 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
 
         const student = results[0];
 
-        db.query("UPDATE students SET status = 'APPROVED' WHERE id = ?", [studentId], (updateErr) => {
+        db.query("UPDATE students SET status = 'APPROVED' WHERE id = ?", [studentId], async (updateErr) => {
             if (updateErr) {
                 console.error('❌ Database Update Failed:', updateErr);
                 return res.status(500).json({ error: 'Failed to update student status.' });
             }
 
-            const studentMailOptions = {
-                from: `"AMAGix Technologies Admissions" <${process.env.SMTP_USER}>`,
-                to: student.email,
-                subject: `Application Approved & Interview Invitation - ${student.track}`,
-                text: `Congratulations, ${student.full_name}!\n\nWe are pleased to inform you that your application for the ${student.track} track at AMAGix Technologies has been reviewed and approved.\n\nNext Steps:\n1. Interview & Screening: Please contact our admissions desk or reply directly to this email to confirm your interview and screening schedule.\n2. Registration & Tuition: Tuition fee schedules, curriculum details, and onboarding packages will be finalized during your session.\n\nWe look forward to welcoming you to the AMAGix learning community!\n\nBest regards,\nAMAGix Admissions Team\nAMAGix Technologies`,
-                html: `
+            try {
+                await resend.emails.send({
+                    from: 'AMAGix Technologies Admissions <onboarding@resend.dev>',
+                    to: student.email,
+                    subject: `Application Approved & Interview Invitation - ${student.track}`,
+                    html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -311,21 +292,15 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
   </table>
 </body>
 </html>
-                `
-            };
-
-            transporter.sendMail(studentMailOptions, (mailErr, info) => {
-                if (mailErr) {
-                    console.error('❌ Student Email Dispatch Failed:', mailErr);
-                    return res.status(200).json({ 
-                        message: `Student ${student.full_name} approved successfully (Note: Email dispatch encountered an issue).` 
-                    });
-                }
-
-                console.log('✅ Student Approval Email Sent:', info.response);
-                return res.status(200).json({ 
-                    message: `Student ${student.full_name} approved and acknowledgement email sent!` 
+                    `
                 });
+                console.log(`✅ Student Approval Email Sent to ${student.email}`);
+            } catch (mailErr) {
+                console.error('❌ Student Email Dispatch Failed:', mailErr);
+            }
+
+            return res.status(200).json({ 
+                message: `Student ${student.full_name} approved and acknowledgement email sent!` 
             });
         });
     });
