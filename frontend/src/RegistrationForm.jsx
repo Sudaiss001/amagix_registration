@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './RegistrationForm.css';
 
-export default function RegistrationForm({ companyName = "AMAGix Technologies", logoUrl = "/amagix.png" }) {
+export default function RegistrationForm({ companyName = "Tech_Camp@AMAGix Technologies", logoUrl = "/amagix.png" }) {
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
