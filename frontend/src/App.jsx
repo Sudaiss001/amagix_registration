@@ -37,7 +37,7 @@ export default function App() {
         {/* Public Route for Students */}
         <Route 
           path="/" 
-          element={<RegistrationForm companyName="AMAGix Technologies" logoUrl="/amagix.png" />} 
+          element={<RegistrationForm companyName="Tech_Camp@AMAGix Technologies" logoUrl="/amagix.png" />} 
         />
         
         {/* Protected Secret Admin Route */}
