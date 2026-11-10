@@ -308,7 +308,8 @@ AMAGix Admissions Team`;
             <select value={selectedTrack} onChange={(e) => setSelectedTrack(e.target.value)}>
               <option value="ALL">All Career Tracks</option>
               <option value="Basic Computing">Basic Computing</option>
-              <option value="Web Development">Web Development</option>
+              <option value="Web Development & AI Automation">Web Development & AI Automation</option>
+              <option value="Web Development">Web Development (Legacy)</option>
               <option value="App Development">App Development</option>
               <option value="Server Security & Ethical Hacking">Server Security & Ethical Hacking</option>
             </select>

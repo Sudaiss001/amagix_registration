@@ -8,7 +8,7 @@ export default function RegistrationForm({ companyName = "Tech_Camp@AMAGix Techn
     phone: '',
     gender: '',
     state: '',
-    track: 'Web Development',
+    track: 'Basic Computing',
     experience_level: 'Beginner'
   });
 
@@ -56,7 +56,7 @@ export default function RegistrationForm({ companyName = "Tech_Camp@AMAGix Techn
         phone: '',
         gender: '',
         state: '',
-        track: 'Web Development',
+        track: 'Basic Computing',
         experience_level: 'Beginner'
       });
     } catch (err) {
@@ -216,7 +216,7 @@ export default function RegistrationForm({ companyName = "Tech_Camp@AMAGix Techn
               </label>
               <select name="track" value={formData.track} onChange={handleChange}>
                 <option value="Basic Computing">Basic Computing</option>
-                <option value="Web Development & AI Automation">Web Development & AI Automations</option>
+                <option value="Web Development & AI Automation">Web Development & AI Automation</option>
               </select>
             </div>
 

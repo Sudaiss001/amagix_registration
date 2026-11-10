@@ -51,7 +51,7 @@ db.getConnection((err, connection) => {
             CREATE TABLE IF NOT EXISTS students (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 full_name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
                 phone VARCHAR(50) NOT NULL,
                 gender VARCHAR(50) NOT NULL,
                 state VARCHAR(100) NOT NULL,
@@ -63,12 +63,31 @@ db.getConnection((err, connection) => {
         `;
         
         connection.query(createTableQuery, (tableErr) => {
-            connection.release();
             if (tableErr) {
+                connection.release();
                 console.error('❌ Failed to create students table:', tableErr.message);
-            } else {
-                console.log('✅ Students table verified/created successfully in database!');
+                return;
             }
+            console.log('✅ Students table verified/created successfully in database!');
+
+            // Ensure existing table also has UNIQUE constraint on email
+            const addUniqueIndexQuery = `ALTER TABLE students ADD UNIQUE (email);`;
+            connection.query(addUniqueIndexQuery, (alterErr) => {
+                connection.release();
+                if (alterErr) {
+                    // ER_DUP_KEYNAME (1061) indicates index already exists
+                    if (alterErr.code === 'ER_DUP_KEYNAME' || alterErr.errno === 1061) {
+                        console.log('✅ Email UNIQUE constraint is verified and active.');
+                    } else if (alterErr.code === 'ER_DUP_ENTRY' || alterErr.errno === 1062) {
+                        console.warn('⚠️ Note: Duplicate emails exist in the database from past records; unique index cannot be applied until duplicates are resolved.');
+                    } else {
+                        // Silently handle or log any other non-fatal alter notice
+                        console.log('ℹ️ Index check status:', alterErr.message);
+                    }
+                } else {
+                    console.log('✅ Email UNIQUE constraint added to existing students table successfully.');
+                }
+            });
         });
     }
 });
@@ -92,7 +111,7 @@ app.post('/api/register', (req, res) => {
 
     db.query(sqlInsert, [full_name, email, phone, gender, state, track, experience_level || 'Beginner'], (err, result) => {
         if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
+            if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062 || (err.message && err.message.includes('Duplicate entry'))) {
                 return res.status(400).json({ error: 'This email address is already registered.' });
             }
             console.error('Database Error:', err);
