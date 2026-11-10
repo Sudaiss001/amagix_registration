@@ -1,7 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
-const { Resend } = require('resend');
 const cors = require('cors');
+const SibApiV3Sdk = require('@getbrevo/brevo');
 require('dotenv').config();
 
 const app = express();
@@ -10,8 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Resend with API Key
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Brevo API Instance
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 // 1. MySQL Database Connection Pool (Cloud Aiven Database)
 const db = mysql.createPool({
@@ -58,6 +59,11 @@ db.getConnection((err, connection) => {
     }
 });
 
+// Health check endpoint for Render
+app.get('/', (req, res) => {
+    res.send('AMAGix Backend API is running!');
+});
+
 // -------------------------------------------------------------
 // ENDPOINT 1: Student Registration (POST /api/register)
 // -------------------------------------------------------------
@@ -81,28 +87,29 @@ app.post('/api/register', (req, res) => {
 
         const studentId = result.insertId;
 
-        // Send instant notification email to Admin via Resend
+        // Send instant notification email to Admin via Brevo
         try {
-            await resend.emails.send({
-                from: 'AMAGix Portal <onboarding@resend.dev>', // Use onboarding@resend.dev for testing without a custom domain
-                to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
-                subject: `🚨 New Student Registration: ${full_name}`,
-                html: `
-                    <h2>New Student Application Received</h2>
-                    <p><strong>Name:</strong> ${full_name}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Phone:</strong> ${phone}</p>
-                    <p><strong>Gender:</strong> ${gender}</p>
-                    <p><strong>State:</strong> ${state}</p>
-                    <p><strong>Selected Track:</strong> ${track}</p>
-                    <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
-                    <hr />
-                    <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
-                `
-            });
-            console.log('✅ Admin Registration Notification Email Sent');
+            const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+            sendSmtpEmail.subject = `🚨 New Student Registration: ${full_name}`;
+            sendSmtpEmail.htmlContent = `
+                <h2>New Student Application Received</h2>
+                <p><strong>Name:</strong> ${full_name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Phone:</strong> ${phone}</p>
+                <p><strong>Gender:</strong> ${gender}</p>
+                <p><strong>State:</strong> ${state}</p>
+                <p><strong>Selected Track:</strong> ${track}</p>
+                <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
+                <hr />
+                <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
+            `;
+            sendSmtpEmail.sender = { name: "AMAGix Portal", email: process.env.ADMIN_EMAIL || process.env.SMTP_USER };
+            sendSmtpEmail.to = [{ email: process.env.ADMIN_EMAIL || process.env.SMTP_USER }];
+
+            await apiInstance.sendTransacEmail(sendSmtpEmail);
+            console.log('✅ Admin Registration Notification Email Sent via Brevo');
         } catch (mailErr) {
-            console.error('❌ Admin Email Dispatch Error:', mailErr);
+            console.error('❌ Admin Email Dispatch Error:', mailErr.response ? mailErr.response.body : mailErr);
         }
 
         res.status(201).json({
@@ -169,11 +176,9 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
             }
 
             try {
-                await resend.emails.send({
-                    from: 'AMAGix Technologies Admissions <onboarding@resend.dev>',
-                    to: student.email,
-                    subject: `Application Approved & Interview Invitation - ${student.track}`,
-                    html: `
+                const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+                sendSmtpEmail.subject = `Application Approved & Interview Invitation - ${student.track}`;
+                sendSmtpEmail.htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,14 +190,10 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0B1120; padding: 32px 16px;">
     <tr>
       <td align="center">
-        <!-- Main Card -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; width: 100%; background-color: #111C2E; border-radius: 14px; border: 1px solid #1E293B; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.5);">
-          <!-- Top Accent Bar -->
           <tr>
             <td style="height: 4px; background: linear-gradient(90deg, #0284C7 0%, #38BDF8 100%);"></td>
           </tr>
-          
-          <!-- Brand Header -->
           <tr>
             <td style="padding: 32px 32px 20px; border-bottom: 1px solid #1E293B;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -205,8 +206,6 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
               </table>
             </td>
           </tr>
-
-          <!-- Main Content -->
           <tr>
             <td style="padding: 32px;">
               <h2 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #F8FAFC;">
@@ -215,8 +214,6 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
               <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #CBD5E1;">
                 We are pleased to inform you that your application for the <strong style="color: #38BDF8;">${student.track}</strong> track at <strong>AMAGix Technologies</strong> has been reviewed and <strong style="color: #34D399;">approved</strong>.
               </p>
-
-              <!-- Candidate Summary Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0B1120; border-radius: 10px; border: 1px solid #1E293B; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 16px 20px;">
@@ -243,12 +240,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
                   </td>
                 </tr>
               </table>
-
-              <!-- Next Steps Section -->
-              <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #F8FAFC;">
-                Next Steps to Complete Enrollment:
-              </h3>
-              
+              <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #F8FAFC;">Next Steps to Complete Enrollment:</h3>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 14px; line-height: 1.6; color: #CBD5E1; margin-bottom: 24px;">
                 <tr>
                   <td valign="top" style="padding: 6px 10px 6px 0; color: #38BDF8; font-weight: bold;">1.</td>
@@ -263,12 +255,9 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
                   </td>
                 </tr>
               </table>
-
               <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #94A3B8;">
                 We look forward to welcoming you to our learning community and accelerating your tech career!
               </p>
-
-              <!-- Sign-off -->
               <p style="margin: 0; font-size: 14px; color: #CBD5E1;">
                 Warm regards,<br />
                 <strong style="color: #F8FAFC;">AMAGix Admissions Team</strong><br />
@@ -276,8 +265,6 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
               </p>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
             <td style="padding: 20px 32px; background-color: #0B1120; border-top: 1px solid #1E293B; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.5;">
@@ -292,11 +279,14 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
   </table>
 </body>
 </html>
-                    `
-                });
-                console.log(`✅ Student Approval Email Sent to ${student.email}`);
+            `;
+                sendSmtpEmail.sender = { name: "AMAGix Technologies Admissions", email: process.env.ADMIN_EMAIL || process.env.SMTP_USER };
+                sendSmtpEmail.to = [{ email: student.email, name: student.full_name }];
+
+                await apiInstance.sendTransacEmail(sendSmtpEmail);
+                console.log(`✅ Student Approval Email Sent to ${student.email} via Brevo`);
             } catch (mailErr) {
-                console.error('❌ Student Email Dispatch Failed:', mailErr);
+                console.error('❌ Student Email Dispatch Failed:', mailErr.response ? mailErr.response.body : mailErr);
             }
 
             return res.status(200).json({ 
@@ -310,6 +300,6 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
 // Server Initialization
 // -------------------------------------------------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running live on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server is running live on port ${PORT}`);
 });
