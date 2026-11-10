@@ -216,9 +216,7 @@ export default function RegistrationForm({ companyName = "Tech_Camp@AMAGix Techn
               </label>
               <select name="track" value={formData.track} onChange={handleChange}>
                 <option value="Basic Computing">Basic Computing</option>
-                <option value="Web Development">Web Development</option>
-                <option value="App Development">App Development</option>
-                <option value="CyberSecurity & Ethical Hacking">CyberSecurity & Ethical Hacking</option>
+                <option value="Web Development & AI Automation">Web Development & AI Automation</option>
               </select>
             </div>
 
