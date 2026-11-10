@@ -19,6 +19,15 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// Verify Transporter Connection on Startup
+transporter.verify((error) => {
+    if (error) {
+        console.error('❌ SMTP Configuration Error:', error.message);
+    } else {
+        console.log('✅ Gmail SMTP Server is ready to dispatch emails!');
+    }
+});
+
 // 1. MySQL Database Connection Pool (Cloud Aiven Database)
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -81,7 +90,7 @@ app.post('/api/register', (req, res) => {
 
     const sqlInsert = `INSERT INTO students (full_name, email, phone, gender, state, track, experience_level) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-    db.query(sqlInsert, [full_name, email, phone, gender, state, track, experience_level || 'Beginner'], async (err, result) => {
+    db.query(sqlInsert, [full_name, email, phone, gender, state, track, experience_level || 'Beginner'], (err, result) => {
         if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(400).json({ error: 'This email address is already registered.' });
@@ -92,36 +101,34 @@ app.post('/api/register', (req, res) => {
 
         const studentId = result.insertId;
 
-        // Send instant notification email to Admin via Gmail SMTP
-        try {
-            const adminMailOptions = {
-                from: `"AMAGix Portal" <${process.env.SMTP_USER}>`,
-                to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
-                subject: `🚨 New Student Registration: ${full_name}`,
-                html: `
-                    <h2>New Student Application Received</h2>
-                    <p><strong>Name:</strong> ${full_name}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Phone:</strong> ${phone}</p>
-                    <p><strong>Gender:</strong> ${gender}</p>
-                    <p><strong>State:</strong> ${state}</p>
-                    <p><strong>Selected Track:</strong> ${track}</p>
-                    <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
-                    <hr />
-                    <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
-                `
-            };
-
-            await transporter.sendMail(adminMailOptions);
-            console.log('✅ Admin Registration Notification Email Sent via Gmail SMTP');
-        } catch (mailErr) {
-            console.error('❌ Admin Email Dispatch Error:', mailErr);
-        }
-
+        // 1. Respond to frontend INSTANTLY so the UI never hangs
         res.status(201).json({
             message: 'Registration successful! Your application has been submitted for review.',
             studentId
         });
+
+        // 2. Dispatch admin notification email in the background (non-blocking)
+        const adminMailOptions = {
+            from: `"AMAGix Portal" <${process.env.SMTP_USER}>`,
+            to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
+            subject: `🚨 New Student Registration: ${full_name}`,
+            html: `
+                <h2>New Student Application Received</h2>
+                <p><strong>Name:</strong> ${full_name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Phone:</strong> ${phone}</p>
+                <p><strong>Gender:</strong> ${gender}</p>
+                <p><strong>State:</strong> ${state}</p>
+                <p><strong>Selected Track:</strong> ${track}</p>
+                <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
+                <hr />
+                <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
+            `
+        };
+
+        transporter.sendMail(adminMailOptions)
+            .then(() => console.log('✅ Admin Notification Email Sent via Gmail SMTP'))
+            .catch((mailErr) => console.error('❌ Admin Email Dispatch Error:', mailErr));
     });
 });
 
@@ -175,18 +182,23 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
 
         const student = results[0];
 
-        db.query("UPDATE students SET status = 'APPROVED' WHERE id = ?", [studentId], async (updateErr) => {
+        db.query("UPDATE students SET status = 'APPROVED' WHERE id = ?", [studentId], (updateErr) => {
             if (updateErr) {
                 console.error('❌ Database Update Failed:', updateErr);
                 return res.status(500).json({ error: 'Failed to update student status.' });
             }
 
-            try {
-                const studentMailOptions = {
-                    from: `"AMAGix Technologies Admissions" <${process.env.SMTP_USER}>`,
-                    to: student.email,
-                    subject: `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`,
-                    html: `
+            // 1. Respond to admin dashboard INSTANTLY
+            res.status(200).json({ 
+                message: `Student ${student.full_name} approved successfully!` 
+            });
+
+            // 2. Dispatch approval email to student in the background (non-blocking)
+            const studentMailOptions = {
+                from: `"AMAGix Technologies Admissions" <${process.env.SMTP_USER}>`,
+                to: student.email,
+                subject: `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`,
+                html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -258,25 +270,19 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
   </table>
 </body>
 </html>
-                    `
-                };
+                `
+            };
 
-                await transporter.sendMail(studentMailOptions);
-                console.log(`✅ Student Approval Email Sent to ${student.email} via Gmail SMTP`);
-            } catch (mailErr) {
-                console.error('❌ Student Email Dispatch Failed:', mailErr);
-            }
-
-            return res.status(200).json({ 
-                message: `Student ${student.full_name} approved and acknowledgement email sent!` 
-            });
+            transporter.sendMail(studentMailOptions)
+                .then(() => console.log(`✅ Student Approval Email Sent to ${student.email} via Gmail SMTP`))
+                .catch((mailErr) => console.error('❌ Student Email Dispatch Failed:', mailErr));
         });
     });
 });
 
-// ---------------------------------------------
+// -------------------------------------------------------------
 // Server Initialization
-// ---------------------------------------------
+// -------------------------------------------------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running live on port ${PORT}`);
