@@ -50,17 +50,39 @@ export default function AdminDashboard({ companyName = "AMAGix Technologies", on
     fetchStudents();
   }, []);
 
-  const handleApprove = async (id, name) => {
-    setActionLoading(id);
+  const handleApproveAndCopy = async (student) => {
+    setActionLoading(student.id);
     try {
-      const res = await fetch(`https://amagix-registration.onrender.com/api/admin/approve/${id}`, {
+      const res = await fetch(`https://amagix-registration.onrender.com/api/admin/approve/${student.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Approval failed');
 
-      showToast(data.message || `Student ${name} approved and acknowledgement email sent!`, 'success');
+      // Construct the professional, well-arranged copy-paste message
+      const formattedMessage = 
+`Subject: Official Admission Approval & Next Steps - Tech Camp at AMAGix Technologies
+
+🎉 Congratulations, ${student.full_name}!
+
+We are delighted to inform you that your application for the ${student.track} track at Tech Camp at AMAGix Technologies has been reviewed and officially approved!
+
+Tuition & Enrollment Details:
+• Bank Name: Moniepoint
+• Account Name: AMAGix Technologies
+• Account Number: 5409197862
+
+Next Steps:
+To secure your slot, please transfer the required fee to the account above. Once done, kindly share your payment receipt via WhatsApp to 08139081076 for immediate validation and confirmation.
+
+Warm regards,
+AMAGix Admissions Team`;
+
+      // Copy message to clipboard automatically
+      await navigator.clipboard.writeText(formattedMessage);
+
+      showToast(`Approved ${student.full_name}! Message copied to clipboard.`, 'success');
       fetchStudents();
     } catch (err) {
       showToast(err.message, 'error');
@@ -110,7 +132,7 @@ export default function AdminDashboard({ companyName = "AMAGix Technologies", on
             )}
           </div>
           <div className="toast-content">
-            <span className="toast-title">{toast.type === 'success' ? 'Approval Dispatched' : 'Action Failed'}</span>
+            <span className="toast-title">{toast.type === 'success' ? 'Success & Copied' : 'Action Failed'}</span>
             <span className="toast-message">{toast.message}</span>
           </div>
           <button 
@@ -419,22 +441,23 @@ export default function AdminDashboard({ companyName = "AMAGix Technologies", on
                     <td className="cell-action">
                       {student.status === 'PENDING' ? (
                         <button
-                          onClick={() => handleApprove(student.id, student.full_name)}
+                          onClick={() => handleApproveAndCopy(student)}
                           disabled={actionLoading === student.id}
                           className="approve-btn"
-                          title={`Approve ${student.full_name} and dispatch notification email`}
+                          title={`Approve ${student.full_name} and copy executive approval message`}
                         >
                           {actionLoading === student.id ? (
                             <span className="btn-loading-inline">
                               <span className="mini-spinner"></span>
-                              <span>Dispatching...</span>
+                              <span>Processing...</span>
                             </span>
                           ) : (
                             <span className="btn-content-inline">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                               </svg>
-                              <span>Approve &amp; Notify</span>
+                              <span>Approve &amp; Copy Message</span>
                             </span>
                           )}
                         </button>
