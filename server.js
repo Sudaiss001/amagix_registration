@@ -110,6 +110,7 @@ app.post('/api/register', (req, res) => {
         // 2. Dispatch admin notification email in the background (non-blocking)
         const adminMailOptions = {
             from: `"AMAGix Portal" <${process.env.SMTP_USER}>`,
+            replyTo: process.env.SMTP_USER,
             to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
             subject: `🚨 New Student Registration: ${full_name}`,
             html: `
@@ -196,6 +197,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
             // 2. Dispatch approval email to student in the background (non-blocking)
             const studentMailOptions = {
                 from: `"AMAGix Technologies Admissions" <${process.env.SMTP_USER}>`,
+                replyTo: process.env.SMTP_USER,
                 to: student.email,
                 subject: `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`,
                 html: `
