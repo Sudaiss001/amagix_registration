@@ -177,7 +177,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
 
             try {
                 const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-                sendSmtpEmail.subject = `Application Approved & Interview Invitation - ${student.track}`;
+                sendSmtpEmail.subject = `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`;
                 sendSmtpEmail.htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
@@ -199,7 +199,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;">AMAGix Technologies</h1>
+                    <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;">Tech Camp at AMAGix Technologies</h1>
                     <p style="margin: 4px 0 0; font-size: 13px; color: #38BDF8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Admissions & Technical Training</p>
                   </td>
                 </tr>
@@ -209,67 +209,38 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
           <tr>
             <td style="padding: 32px;">
               <h2 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #F8FAFC;">
-                Congratulations, ${student.full_name}!
+                🎉 Congratulations, ${student.full_name}!
               </h2>
               <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #CBD5E1;">
-                We are pleased to inform you that your application for the <strong style="color: #38BDF8;">${student.track}</strong> track at <strong>AMAGix Technologies</strong> has been reviewed and <strong style="color: #34D399;">approved</strong>.
+                Your application for the <strong style="color: #38BDF8;">${student.track}</strong> track at <strong>Tech Camp at AMAGix Technologies</strong> has been reviewed and <strong style="color: #34D399;">approved</strong>!
               </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0B1120; border-radius: 10px; border: 1px solid #1E293B; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 16px 20px;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 13px; color: #94A3B8;">
-                      <tr>
-                        <td style="padding: 5px 0; width: 130px;"><strong>Applicant:</strong></td>
-                        <td style="padding: 5px 0; color: #F8FAFC; font-weight: 600;">${student.full_name}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 5px 0;"><strong>Enrolled Track:</strong></td>
-                        <td style="padding: 5px 0; color: #38BDF8; font-weight: 600;">${student.track}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 5px 0;"><strong>Experience Level:</strong></td>
-                        <td style="padding: 5px 0; color: #F8FAFC;">${student.experience_level || 'Beginner'}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 5px 0;"><strong>Status:</strong></td>
-                        <td style="padding: 5px 0;">
-                          <span style="display: inline-block; background-color: rgba(34, 197, 94, 0.15); color: #34D399; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">APPROVED</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #F8FAFC;">Next Steps to Complete Enrollment:</h3>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 14px; line-height: 1.6; color: #CBD5E1; margin-bottom: 24px;">
-                <tr>
-                  <td valign="top" style="padding: 6px 10px 6px 0; color: #38BDF8; font-weight: bold;">1.</td>
-                  <td style="padding: 6px 0;">
-                    <strong style="color: #F8FAFC;">Interview & Screening:</strong> Please contact our admissions desk or reply directly to this email to confirm your interview and screening schedule.
-                  </td>
-                </tr>
-                <tr>
-                  <td valign="top" style="padding: 6px 10px 6px 0; color: #38BDF8; font-weight: bold;">2.</td>
-                  <td style="padding: 6px 0;">
-                    <strong style="color: #F8FAFC;">Registration & Tuition:</strong> Fee structures, schedules, and payment validation steps will be shared during your interview session.
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #94A3B8;">
-                We look forward to welcoming you to our learning community and accelerating your tech career!
+
+              <!-- Payment Box -->
+              <div style="background-color: #0B1120; border-radius: 10px; border: 1px solid #1E293B; padding: 20px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #38BDF8;">Payment & Enrollment Details:</h3>
+                <p style="margin: 0 0 12px; font-size: 14px; color: #CBD5E1;">To complete your admission, please transfer the required fee to the account details below:</p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #F8FAFC; line-height: 1.6;">
+                  <li><strong>Account Name:</strong> AMAGix Technologies</li>
+                  <li><strong>Account Number:</strong> 5409197862</li>
+                  <li><strong>Bank Name:</strong> Moniepoint</li>
+                </ul>
+              </div>
+
+              <!-- Next Steps -->
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #CBD5E1;">
+                After making the payment, kindly share your payment receipt via WhatsApp to <strong style="color: #38BDF8;">08139081076</strong> for immediate validation and confirmation.
               </p>
+
               <p style="margin: 0; font-size: 14px; color: #CBD5E1;">
                 Warm regards,<br />
-                <strong style="color: #F8FAFC;">AMAGix Admissions Team</strong><br />
-                <span style="font-size: 12px; color: #64748B;">AMAGix Technologies</span>
+                <strong style="color: #F8FAFC;">AMAGix Admissions Team</strong>
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding: 20px 32px; background-color: #0B1120; border-top: 1px solid #1E293B; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.5;">
-                This is an official admissions communication from AMAGix Technologies.<br />
-                If you did not apply for this program, please ignore this email or contact support.
+                This is an official automated notification from Tech Camp at AMAGix Technologies.
               </p>
             </td>
           </tr>
@@ -279,7 +250,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
   </table>
 </body>
 </html>
-            `;
+                `;
                 sendSmtpEmail.sender = { name: "AMAGix Technologies Admissions", email: process.env.ADMIN_EMAIL || process.env.SMTP_USER };
                 sendSmtpEmail.to = [{ email: student.email, name: student.full_name }];
 
