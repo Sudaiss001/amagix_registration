@@ -1,7 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-const { TransactionalEmailsApi, SendSmtpEmail, TransactionalEmailsApiApiKeys } = require('@getbrevo/brevo');
+const brevo = require('@getbrevo/brevo');
 require('dotenv').config();
 
 const app = express();
@@ -10,9 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Brevo API Instance (Fixed destructuring initialization)
-const apiInstance = new TransactionalEmailsApi();
-apiInstance.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+// Initialize Brevo API Instance (Fixed namespace initialization)
+const apiInstance = new brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 // 1. MySQL Database Connection Pool (Cloud Aiven Database)
 const db = mysql.createPool({
@@ -89,7 +89,7 @@ app.post('/api/register', (req, res) => {
 
         // Send instant notification email to Admin via Brevo
         try {
-            const sendSmtpEmail = new SendSmtpEmail();
+            const sendSmtpEmail = new brevo.SendSmtpEmail();
             sendSmtpEmail.subject = `🚨 New Student Registration: ${full_name}`;
             sendSmtpEmail.htmlContent = `
                 <h2>New Student Application Received</h2>
@@ -176,7 +176,7 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
             }
 
             try {
-                const sendSmtpEmail = new SendSmtpEmail();
+                const sendSmtpEmail = new brevo.SendSmtpEmail();
                 sendSmtpEmail.subject = `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`;
                 sendSmtpEmail.htmlContent = `
 <!DOCTYPE html>
