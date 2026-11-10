@@ -1,7 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-const SibApiV3Sdk = require('sib-api-v3-sdk');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -10,12 +10,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Brevo / Sendinblue API Client
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
-
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+// Initialize Gmail SMTP Transporter
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
+});
 
 // 1. MySQL Database Connection Pool (Cloud Aiven Database)
 const db = mysql.createPool({
@@ -90,29 +92,30 @@ app.post('/api/register', (req, res) => {
 
         const studentId = result.insertId;
 
-        // Send instant notification email to Admin via Brevo
+        // Send instant notification email to Admin via Gmail SMTP
         try {
-            const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-            sendSmtpEmail.subject = `🚨 New Student Registration: ${full_name}`;
-            sendSmtpEmail.htmlContent = `
-                <h2>New Student Application Received</h2>
-                <p><strong>Name:</strong> ${full_name}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Phone:</strong> ${phone}</p>
-                <p><strong>Gender:</strong> ${gender}</p>
-                <p><strong>State:</strong> ${state}</p>
-                <p><strong>Selected Track:</strong> ${track}</p>
-                <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
-                <hr />
-                <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
-            `;
-            sendSmtpEmail.sender = { name: "AMAGix Portal", email: process.env.ADMIN_EMAIL || process.env.SMTP_USER };
-            sendSmtpEmail.to = [{ email: process.env.ADMIN_EMAIL || process.env.SMTP_USER }];
+            const adminMailOptions = {
+                from: `"AMAGix Portal" <${process.env.SMTP_USER}>`,
+                to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
+                subject: `🚨 New Student Registration: ${full_name}`,
+                html: `
+                    <h2>New Student Application Received</h2>
+                    <p><strong>Name:</strong> ${full_name}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Phone:</strong> ${phone}</p>
+                    <p><strong>Gender:</strong> ${gender}</p>
+                    <p><strong>State:</strong> ${state}</p>
+                    <p><strong>Selected Track:</strong> ${track}</p>
+                    <p><strong>Experience Level:</strong> ${experience_level || 'Beginner'}</p>
+                    <hr />
+                    <p>Status is currently set to <strong>PENDING</strong> in your database.</p>
+                `
+            };
 
-            await apiInstance.sendTransacEmail(sendSmtpEmail);
-            console.log('✅ Admin Registration Notification Email Sent via Brevo');
+            await transporter.sendMail(adminMailOptions);
+            console.log('✅ Admin Registration Notification Email Sent via Gmail SMTP');
         } catch (mailErr) {
-            console.error('❌ Admin Email Dispatch Error:', mailErr.response ? mailErr.response.body : mailErr);
+            console.error('❌ Admin Email Dispatch Error:', mailErr);
         }
 
         res.status(201).json({
@@ -179,9 +182,11 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
             }
 
             try {
-                const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-                sendSmtpEmail.subject = `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`;
-                sendSmtpEmail.htmlContent = `
+                const studentMailOptions = {
+                    from: `"AMAGix Technologies Admissions" <${process.env.SMTP_USER}>`,
+                    to: student.email,
+                    subject: `Application Approved & Next Steps - Tech Camp at AMAGix Technologies`,
+                    html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -253,14 +258,13 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
   </table>
 </body>
 </html>
-                `;
-                sendSmtpEmail.sender = { name: "AMAGix Technologies Admissions", email: process.env.ADMIN_EMAIL || process.env.SMTP_USER };
-                sendSmtpEmail.to = [{ email: student.email, name: student.full_name }];
+                    `
+                };
 
-                await apiInstance.sendTransacEmail(sendSmtpEmail);
-                console.log(`✅ Student Approval Email Sent to ${student.email} via Brevo`);
+                await transporter.sendMail(studentMailOptions);
+                console.log(`✅ Student Approval Email Sent to ${student.email} via Gmail SMTP`);
             } catch (mailErr) {
-                console.error('❌ Student Email Dispatch Failed:', mailErr.response ? mailErr.response.body : mailErr);
+                console.error('❌ Student Email Dispatch Failed:', mailErr);
             }
 
             return res.status(200).json({ 
@@ -270,9 +274,9 @@ app.post('/api/admin/approve/:id', requireAdminAuth, (req, res) => {
     });
 });
 
-// -------------------------------------------------------------
+// ---------------------------------------------
 // Server Initialization
-// -------------------------------------------------------------
+// ---------------------------------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running live on port ${PORT}`);
