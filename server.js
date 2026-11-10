@@ -10,9 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Brevo API Instance
+// Initialize Brevo API Instance (Fixed authentication setup)
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
 
 // 1. MySQL Database Connection Pool (Cloud Aiven Database)
 const db = mysql.createPool({
